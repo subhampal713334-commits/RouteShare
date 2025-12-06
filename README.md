@@ -12,7 +12,7 @@ RouteShare is a modern, mobile-first ride-sharing application designed for the I
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: React 19
+- **Frontend**: React 18, Vite
 - **Styling**: Tailwind CSS
 - **Animations**: Framer Motion
 - **Icons**: Lucide React
@@ -33,20 +33,18 @@ RouteShare is a modern, mobile-first ride-sharing application designed for the I
     ```
 
 3.  **Environment Variables**
-    Create a `.env` file in the root directory:
+    Create a `.env` file in the root directory (for local dev) or set them in Vercel:
     ```env
     # Google Gemini API Key
-    API_KEY=your_google_api_key_here
+    VITE_API_KEY=your_google_api_key_here
     
-    # Supabase Configuration (Optional overrides)
-    REACT_APP_SUPABASE_URL=your_supabase_url
-    REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key
+    # Supabase Configuration
+    VITE_SUPABASE_URL=your_supabase_url
+    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
     ```
 
 4.  **Run Locally**
     ```bash
-    npm start
-    # or if using Vite
     npm run dev
     ```
 
