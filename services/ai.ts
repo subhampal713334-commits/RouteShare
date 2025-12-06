@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 
+// Use process.env.API_KEY as strictly required by the environment
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 /**
