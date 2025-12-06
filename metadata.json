@@ -1,5 +1,7 @@
 {
   "name": "RouteShare",
   "description": "A modern, mobile-first ride-sharing application built with React, Tailwind CSS, and Framer Motion.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "geolocation"
+  ]
 }

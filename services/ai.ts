@@ -26,3 +26,19 @@ export async function parseSearchQuery(query: string) {
     return null;
   }
 }
+
+/**
+ * Uses Gemini to reverse geocode a latitude/longitude pair into a readable address.
+ */
+export async function reverseGeocode(lat: number, lng: number) {
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: `What is the approximate address or landmark for latitude ${lat}, longitude ${lng}? Return ONLY the address as a string. Keep it concise (e.g., "Connaught Place, New Delhi").`,
+    });
+    return response.text ? response.text.trim() : `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  } catch (error) {
+    console.error("AI Reverse Geocode failed:", error);
+    return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  }
+}

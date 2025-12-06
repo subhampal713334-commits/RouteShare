@@ -6,10 +6,10 @@ import { Modal } from './components/Modal';
 import { ChatInterface } from './components/ChatInterface';
 import { EditProfileModal } from './components/EditProfileModal';
 import { AuthScreen } from './components/AuthScreen';
-import { Search, ArrowRight, MapPin, Calendar, Clock, Sparkles, MessageCircle, Star, Car, Loader2, Navigation, LogOut, ChevronDown, User as UserIcon, X } from 'lucide-react';
+import { Search, ArrowRight, MapPin, Calendar, Clock, Sparkles, MessageCircle, Star, Car, Loader2, Navigation, LogOut, ChevronDown, User as UserIcon, X, Locate } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from './services/db';
-import { parseSearchQuery } from './services/ai';
+import { parseSearchQuery, reverseGeocode } from './services/ai';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -29,6 +29,7 @@ export default function App() {
   
   // AI State
   const [aiProcessing, setAiProcessing] = useState(false);
+  const [locating, setLocating] = useState(false);
 
   // Post Ride Form State
   const [postForm, setPostForm] = useState({
@@ -215,6 +216,32 @@ export default function App() {
         console.error("Failed to update profile", e);
         alert("Failed to update profile. Please try again.");
     }
+  };
+
+  const handleGetCurrentLocation = () => {
+    if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser");
+        return;
+    }
+    
+    setLocating(true);
+    setPostForm(prev => ({ ...prev, from: "Locating..." }));
+    
+    navigator.geolocation.getCurrentPosition(
+        async (position) => {
+            const { latitude, longitude } = position.coords;
+            // Use Gemini AI to reverse geocode
+            const address = await reverseGeocode(latitude, longitude);
+            setPostForm(prev => ({ ...prev, from: address }));
+            setLocating(false);
+        },
+        (error) => {
+            console.error("Location error", error);
+            setPostForm(prev => ({ ...prev, from: "" }));
+            setLocating(false);
+            alert("Unable to retrieve your location");
+        }
+    );
   };
 
   // --- Sub-components for Tabs ---
@@ -673,13 +700,22 @@ export default function App() {
               <label className="text-sm font-bold text-slate-700 flex items-center">
                 <MapPin size={16} className="mr-2 text-blue-500" /> From
               </label>
-              <input 
-                type="text" 
-                value={postForm.from}
-                onChange={e => setPostForm({...postForm, from: e.target.value})}
-                placeholder="Current Location" 
-                className="w-full p-4 bg-slate-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-slate-800" 
-              />
+              <div className="relative">
+                <input 
+                    type="text" 
+                    value={postForm.from}
+                    onChange={e => setPostForm({...postForm, from: e.target.value})}
+                    placeholder="Current Location" 
+                    className="w-full p-4 pr-12 bg-slate-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-slate-800" 
+                />
+                <button 
+                    onClick={handleGetCurrentLocation}
+                    className="absolute right-2 top-2 p-2 bg-white rounded-lg shadow-sm text-slate-500 hover:text-blue-600 transition-colors"
+                    title="Use Current Location"
+                >
+                    {locating ? <Loader2 size={18} className="animate-spin" /> : <Locate size={18} />}
+                </button>
+              </div>
             </div>
 
             <div className="space-y-2">
