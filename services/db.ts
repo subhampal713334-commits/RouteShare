@@ -4,17 +4,9 @@ import { SAMPLE_RIDES, GARDEN_AVATARS } from "../constants";
 
 // --- SUPABASE CONFIGURATION ---
 // IMPORTANT: Replace these with your own project details from the Supabase Dashboard!
-
-// Helper to safely access environment variables without crashing if import.meta is undefined
-const getEnv = (key: string) => {
-  if (typeof process !== 'undefined' && process.env && process.env[key]) {
-    return process.env[key];
-  }
-  return undefined;
-};
-
-const SUPABASE_URL = getEnv('VITE_SUPABASE_URL') || 'https://ossbzuzqqnmgsnheyhxy.supabase.co';
-const SUPABASE_KEY = getEnv('VITE_SUPABASE_ANON_KEY') || 'sb_publishable_4XD6GYYD1C2TEEf4lo37rA_gTG5KeLQ';
+// We use direct process.env access so Vite's `define` plugin can statically replace these values.
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://ossbzuzqqnmgsnheyhxy.supabase.co';
+const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_4XD6GYYD1C2TEEf4lo37rA_gTG5KeLQ';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
