@@ -20,7 +20,10 @@ export async function parseSearchQuery(query: string) {
       },
     });
     
-    return JSON.parse(response.text);
+    // Robustly parse JSON by stripping potential Markdown code blocks
+    const text = response.text || "{}";
+    const cleanText = text.replace(/```json\n?|\n?```/g, "").trim();
+    return JSON.parse(cleanText);
   } catch (error) {
     console.error("AI Parsing failed:", error);
     return null;
