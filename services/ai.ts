@@ -1,47 +1,84 @@
-import { GoogleGenAI } from "@google/genai";
-
-// Use process.env.API_KEY as strictly required by the environment
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+/**
+ * Local heuristic service to replace Gemini AI.
+ * Provides basic text parsing for search queries and coordinate formatting.
+ */
 
 /**
- * Uses Gemini to parse a natural language query into structured search filters.
+ * Parses a natural language query into structured search filters using basic string manipulation.
+ * Supports patterns like "Bike to Cyber Hub" or "Delhi to Gurgaon".
  */
 export async function parseSearchQuery(query: string) {
   if (!query) return null;
+  const lowerQuery = query.toLowerCase().trim();
 
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `Extract search intent from this ride-share query: "${query}". 
-      Return ONLY a JSON object with these optional keys: 'from' (origin), 'to' (destination), 'vehicleType' (Sedan, SUV, Luxury, Bike). 
-      If a location isn't specified, ignore it. Example input: "Luxury car to airport". Output: {"to": "Airport", "vehicleType": "Luxury"}`,
-      config: {
-        responseMimeType: "application/json",
-      },
-    });
-    
-    // Robustly parse JSON by stripping potential Markdown code blocks
-    const text = response.text || "{}";
-    const cleanText = text.replace(/```json\n?|\n?```/g, "").trim();
-    return JSON.parse(cleanText);
-  } catch (error) {
-    console.error("AI Parsing failed:", error);
-    return null;
+  let from = "";
+  let to = "";
+  let vehicleType = "";
+
+  // 1. Detect Vehicle Type
+  const vehicleKeywords = ["sedan", "suv", "hatchback", "bike", "scooty", "ev scooty", "luxury"];
+  for (const v of vehicleKeywords) {
+    if (lowerQuery.includes(v)) {
+      // Find the match in the original query to preserve casing if we wanted, 
+      // but here we just standardize the output tag.
+      vehicleType = v.charAt(0).toUpperCase() + v.slice(1);
+      
+      // We don't remove it from the string to keep the 'from/to' parsing simple below,
+      // as usually vehicle comes at start or end.
+      break;
+    }
   }
+
+  // 2. Detect "From X To Y" or "X To Y"
+  // Split by " to " (with spaces to avoid matching words like 'top')
+  if (lowerQuery.includes(" to ")) {
+    const parts = query.split(/ to /i); // Case insensitive split
+    
+    if (parts.length >= 2) {
+      // If the first part contains "from ", strip it
+      let rawFrom = parts[0].trim();
+      if (rawFrom.toLowerCase().startsWith("from ")) {
+        rawFrom = rawFrom.substring(5).trim();
+      }
+
+      // If the first part was just the vehicle type (e.g. "Bike to Office"), 
+      // then 'from' is likely empty or implied current location.
+      // However, usually users type "Loc A to Loc B".
+      
+      // Clean up vehicle name from location strings if it appears there
+      if (vehicleType) {
+        const vehicleRegex = new RegExp(vehicleType, "gi");
+        rawFrom = rawFrom.replace(vehicleRegex, "").trim();
+        parts[1] = parts[1].replace(vehicleRegex, "").trim();
+      }
+
+      from = rawFrom;
+      to = parts[1].trim();
+    }
+  } else {
+    // If no "to" keyword, strictly check if it's just a vehicle search
+    if (!vehicleType) {
+      // Treat whole string as generic search (handled by caller fallback)
+      return null;
+    }
+  }
+
+  // Simulate network delay for "AI" feel
+  await new Promise(resolve => setTimeout(resolve, 600));
+
+  if (from || to || vehicleType) {
+    return { from, to, vehicleType };
+  }
+
+  return null;
 }
 
 /**
- * Uses Gemini to reverse geocode a latitude/longitude pair into a readable address.
+ * Mocks reverse geocoding by returning formatted coordinates.
+ * (Real reverse geocoding requires Google Maps API or similar).
  */
 export async function reverseGeocode(lat: number, lng: number) {
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `What is the approximate address or landmark for latitude ${lat}, longitude ${lng}? Return ONLY the address as a string. Keep it concise (e.g., "Connaught Place, New Delhi").`,
-    });
-    return response.text ? response.text.trim() : `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-  } catch (error) {
-    console.error("AI Reverse Geocode failed:", error);
-    return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-  }
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
 }

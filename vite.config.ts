@@ -12,17 +12,13 @@ export default defineConfig(({ mode }) => {
     define: {
       // Polyfill process.env for the browser
       // Mapping VITE_ env vars to process.env for compatibility with guidelines
-      'process.env.API_KEY': JSON.stringify(env.VITE_API_KEY),
       'process.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL),
       'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY),
     },
     build: {
       rollupOptions: {
-        external: ['@google/genai'],
+        // No external dependencies required for Vercel deployment
       }
-    },
-    optimizeDeps: {
-      exclude: ['@google/genai']
     }
   };
 });

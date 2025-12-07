@@ -31,6 +31,25 @@ export default function App() {
   const [aiProcessing, setAiProcessing] = useState(false);
   const [locating, setLocating] = useState(false);
 
+  // Helper for initial time (Current Time rounded to nearest 5 mins)
+  const getInitialTime = () => {
+    const now = new Date();
+    let h = now.getHours();
+    const m = now.getMinutes();
+    const amp = h >= 12 ? 'PM' : 'AM';
+    h = h % 12;
+    h = h ? h : 12; 
+    // Round minutes to nearest 5
+    const mStr = (Math.ceil(m / 5) * 5 % 60).toString().padStart(2, '0');
+    return {
+        hour: h.toString().padStart(2, '0'),
+        minute: mStr,
+        amp
+    };
+  };
+
+  const [timeParts, setTimeParts] = useState(getInitialTime());
+
   // Post Ride Form State
   const [postForm, setPostForm] = useState({
     from: "",
@@ -41,6 +60,14 @@ export default function App() {
     seats: "1",
     vehicleType: "" as string
   });
+
+  // Sync timeParts to postForm.time
+  useEffect(() => {
+    setPostForm(prev => ({
+        ...prev,
+        time: `${timeParts.hour}:${timeParts.minute} ${timeParts.amp}`
+    }));
+  }, [timeParts]);
 
   // Check Login Status on Mount
   useEffect(() => {
@@ -199,6 +226,7 @@ export default function App() {
         setTab("home");
         // Reset form
         setPostForm({ from: "", to: "", date: "", time: "", price: "", seats: "1", vehicleType: "" });
+        setTimeParts(getInitialTime()); // Reset time picker to current time
     } catch (error: any) {
         alert("Error creating ride: " + (error.message || "Unknown error"));
     }
@@ -747,12 +775,54 @@ export default function App() {
                 <label className="text-sm font-bold text-slate-700 flex items-center">
                   <Clock size={16} className="mr-2 text-slate-400" /> Time
                 </label>
-                <input 
-                    type="time" 
-                    value={postForm.time}
-                    onChange={e => setPostForm({...postForm, time: e.target.value})}
-                    className="w-full p-3 bg-slate-50 rounded-xl border-none outline-none text-slate-600 text-sm font-medium" 
-                />
+                <div className="flex space-x-2">
+                    {/* Hour Select */}
+                    <div className="relative flex-1">
+                        <select
+                            value={timeParts.hour}
+                            onChange={(e) => setTimeParts({...timeParts, hour: e.target.value})}
+                            className="w-full p-3 bg-slate-50 rounded-xl border-none outline-none appearance-none font-bold text-slate-700 text-center"
+                        >
+                            {Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0')).map(h => (
+                                <option key={h} value={h}>{h}</option>
+                            ))}
+                        </select>
+                         <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-slate-400">
+                             <ChevronDown size={14} />
+                        </div>
+                    </div>
+                    
+                    {/* Minute Select */}
+                    <div className="relative flex-1">
+                        <select
+                            value={timeParts.minute}
+                            onChange={(e) => setTimeParts({...timeParts, minute: e.target.value})}
+                            className="w-full p-3 bg-slate-50 rounded-xl border-none outline-none appearance-none font-bold text-slate-700 text-center"
+                        >
+                            {Array.from({ length: 12 }, (_, i) => (i * 5).toString().padStart(2, '0')).map(m => (
+                                <option key={m} value={m}>{m}</option>
+                            ))}
+                        </select>
+                         <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-slate-400">
+                             <ChevronDown size={14} />
+                        </div>
+                    </div>
+
+                    {/* AM/PM Select */}
+                    <div className="relative flex-1">
+                        <select
+                            value={timeParts.amp}
+                            onChange={(e) => setTimeParts({...timeParts, amp: e.target.value})}
+                            className="w-full p-3 bg-slate-50 rounded-xl border-none outline-none appearance-none font-bold text-slate-700 text-center"
+                        >
+                            <option value="AM">AM</option>
+                            <option value="PM">PM</option>
+                        </select>
+                         <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-slate-400">
+                             <ChevronDown size={14} />
+                        </div>
+                    </div>
+                </div>
               </div>
             </div>
 
